@@ -140,6 +140,27 @@ figure.highlight {
   color: #fff;
 }
 
+/* 当前浏览器的 Live2D 开关 */
+#live2d-browser-toggle {
+  position: fixed;
+  left: 16px;
+  bottom: 16px;
+  z-index: 1000;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 20px;
+  background: var(--btn-bg, #7c3aed);
+  color: #fff;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  box-shadow: 0 2px 8px var(--shadow-color, rgba(0, 0, 0, .15));
+}
+#live2d-browser-toggle:focus-visible {
+  outline: 2px solid var(--font-color, #333);
+  outline-offset: 3px;
+}
+
 /* ── 响应式 ── */
 @media (max-width: 768px) {
   .card-widget, .recent-post-item {
