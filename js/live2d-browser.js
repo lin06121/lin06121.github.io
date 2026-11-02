@@ -3,67 +3,44 @@
   if (window.blogLive2dToggleReady) return;
   window.blogLive2dToggleReady = true;
 
-  var storageKey = 'yulin-blog:live2d-enabled';
-  var requestedState = new URLSearchParams(window.location.search).get('live2d');
-  if (requestedState === 'on' || requestedState === 'off') {
-    try {
-      window.localStorage.setItem(storageKey, String(requestedState === 'on'));
-    } catch (error) {
-      // Continue with the stored state when browser storage is unavailable.
-    }
-    var cleanUrl = new URL(window.location.href);
-    cleanUrl.searchParams.delete('live2d');
-    window.history.replaceState({}, '', cleanUrl.pathname + cleanUrl.search + cleanUrl.hash);
+  var tokenKey = 'yulin-blog:live2d-auth-token';
+  var authUrl = 'http://127.0.0.1:8787/api/live2d/verify';
+
+  function loadLive2d() {
+    var config = window.blogLive2dConfig;
+    if (!config) return;
+
+    var script = document.createElement('script');
+    script.src = config.cdn;
+    script.async = true;
+    script.onload = function () {
+      try {
+        window.oml2d = window.OML2D.loadOml2d(config.options);
+      } catch (error) {
+        console.error('Live2D initialization failed.', error);
+      }
+    };
+    document.head.appendChild(script);
   }
 
-  var enabled = false;
   try {
-    enabled = window.localStorage.getItem(storageKey) === 'true';
+    var token = window.localStorage.getItem(tokenKey);
+    if (!token) return;
+
+    fetch(authUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: token })
+    })
+      .then(function (response) { return response.json(); })
+      .then(function (result) {
+        if (result.authorized === true) loadLive2d();
+        else window.localStorage.removeItem(tokenKey);
+      })
+      .catch(function () {
+        // Keep Live2D hidden when the local authorization service is unavailable.
+      });
   } catch (error) {
-    // Browsers blocking storage keep Live2D hidden by default.
+    // Browsers blocking storage keep Live2D hidden.
   }
-
-  if (!enabled) return;
-
-  var button = document.createElement('button');
-  button.id = 'live2d-browser-toggle';
-  button.type = 'button';
-  button.textContent = 'Live2D：' + (enabled ? '开' : '关');
-  button.setAttribute('aria-pressed', String(enabled));
-  button.title = '仅在当前浏览器记住选择，点击后刷新页面';
-  button.addEventListener('click', function () {
-    try {
-      window.localStorage.setItem(storageKey, String(!enabled));
-    } catch (error) {
-      button.textContent = 'Live2D：无法保存';
-      button.title = '请允许此网站保存浏览器数据后重试';
-      return;
-    }
-    window.location.reload();
-  });
-
-  function mountButton() {
-    if (!document.getElementById(button.id)) document.body.appendChild(button);
-  }
-  mountButton();
-  document.addEventListener('pjax:complete', mountButton);
-
-  var config = window.blogLive2dConfig;
-  if (!config) return;
-  var script = document.createElement('script');
-  script.src = config.cdn;
-  script.async = true;
-  function showError() {
-    button.textContent = 'Live2D：加载失败';
-    button.title = '刷新页面重试，或点击关闭当前浏览器的 Live2D';
-  }
-  script.onerror = showError;
-  script.onload = function () {
-    try {
-      window.oml2d = window.OML2D.loadOml2d(config.options);
-    } catch (error) {
-      showError();
-    }
-  };
-  document.head.appendChild(script);
 })();
