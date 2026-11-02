@@ -4,12 +4,26 @@
   window.blogLive2dToggleReady = true;
 
   var storageKey = 'yulin-blog:live2d-enabled';
+  var requestedState = new URLSearchParams(window.location.search).get('live2d');
+  if (requestedState === 'on' || requestedState === 'off') {
+    try {
+      window.localStorage.setItem(storageKey, String(requestedState === 'on'));
+    } catch (error) {
+      // Continue with the stored state when browser storage is unavailable.
+    }
+    var cleanUrl = new URL(window.location.href);
+    cleanUrl.searchParams.delete('live2d');
+    window.history.replaceState({}, '', cleanUrl.pathname + cleanUrl.search + cleanUrl.hash);
+  }
+
   var enabled = false;
   try {
     enabled = window.localStorage.getItem(storageKey) === 'true';
   } catch (error) {
     // Browsers blocking storage keep Live2D hidden by default.
   }
+
+  if (!enabled) return;
 
   var button = document.createElement('button');
   button.id = 'live2d-browser-toggle';
@@ -33,8 +47,6 @@
   }
   mountButton();
   document.addEventListener('pjax:complete', mountButton);
-
-  if (!enabled) return;
 
   var config = window.blogLive2dConfig;
   if (!config) return;

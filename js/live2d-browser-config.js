@@ -2,7 +2,7 @@ window.blogLive2dConfig = {"cdn":"https://unpkg.com/oh-my-live2d","options":{"do
 window.blogLive2dConfig.options.menus.items = ((defaultItems) => {
   // 过滤掉默认的 about 项
   const filtered = defaultItems.filter(function(item) {
-    return item.id !== 'about';
+    return String(item.id).toLowerCase() !== 'about';
   });
   return [
     { id: 'home', icon: 'home', title: '回到首页', onClick: function() { window.location.href = '/'; } },
